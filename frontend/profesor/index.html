@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>UPTTAPC Asistencias — Vista Profesor</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+    <!-- QR Code generation -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+    <style>
+  root {
+    --bg: linear-gradient(135deg, #ff4d4d, #c31432); /* Degradado de rojo vivo a rojo carmín claro */
+    --surface: #ffffff;      /* ¡Tarjetas blancas para que el contraste sea súper limpio! */
+    --surface2: #fff5f5;     /* Un tono de fondo muy suave para las listas */
+    --border: #ffcccc;       /* Bordes sutiles en rosa/rojo pastel */
+    --accent: #e63946;       /* Rojo brillante moderno para botones principales */
+    --accent2: #0056b3;      /* El azul del logo para hacer contraste en textos o enlaces */
+    --success: #10b981;
+    --text: #2b2d42;         /* Letras oscuras para que se lea perfecto sobre fondo blanco */
+    --muted: #6c757d;
+    --r: 12px;
+
+}
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body 
+        /* ── body {
+    background: var(--bg) no-repeat center center fixed;
+    background-size: cover;
+    color: var(--text);
+}Header ── */
+        header {
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            padding: 0 28px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky; top: 0; z-index: 100;
+        }
+        .header-logo { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.1rem; background: linear-gradient(90deg,var(--accent),var(--accent2)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+        .header-user { display: flex; align-items: center; gap: 12px; font-size: .85rem; }
+        .avatar { width:32px; height:32px; background: linear-gradient(135deg,var(--accent),var(--accent2)); border-radius: 50%; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:.8rem; }
+        .btn-logout { background:none; border:1px solid var(--border); color:var(--muted); padding:5px 12px; border-radius:8px; cursor:pointer; font-size:.8rem; transition:all .2s; }
+        .btn-logout:hover { border-color:var(--danger); color:var(--danger); }
+
+        /* ── Layout ── */
+        main { flex:1; display:grid; grid-template-columns: 280px 1fr; height: calc(100vh - 60px); overflow: hidden; }
+
+        /* ── Sidebar ── */
+        aside {
+            background: var(--surface);
+            border-right: 1px solid var(--border);
+            overflow-y: auto;
+            padding: 20px 16px;
+        }
+        .sidebar-title { font-size: .7rem; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); padding: 0 8px; margin-bottom: 10px; }
+        .subject-btn {
+            display: block; width: 100%;
+            text-align: left;
+            background: none;
+            border: 1px solid transparent;
+            border-radius: var(--r);
+            padding: 12px 14px;
+            color: var(--text);
+            cursor: pointer;
+            font-family: inherit;
+            font-size: .88rem;
+            transition: all .2s;
+            margin-bottom: 4px;
+        }
+        .subject-btn:hover { background: rgba(0,212,255,.05); border-color: var(--border); }
+        .subject-btn.active { background: rgba(0,212,255,.08); border-color: rgba(0,212,255,.3); }
+        .subject-btn .code { font-size: .72rem; color: var(--accent); font-weight: 600; }
+        .subject-btn .name { font-weight: 500; }
+        .subject-btn .count { font-size: .72rem; color: var(--muted); margin-top: 2px; }
+
+        .new-session-btn {
+            display: flex; align-items: center; gap: 8px;
+            width: 100%; padding: 10px 14px;
+            background: linear-gradient(135deg, rgba(0,212,255,.1), rgba(124,58,237,.1));
+            border: 1px dashed rgba(0,212,255,.3);
+            border-radius: var(--r);
+            color: var(--accent);
+            cursor: pointer; font-family: inherit; font-size: .85rem;
+            margin-top: 12px; transition: all .2s;
+        }
+        .new-session-btn:hover { background: rgba(0,212,255,.12); }
+
+        /* ── Content ── */
+        .content { overflow-y: auto; padding: 28px; display: flex; flex-direction: column; gap: 24px; }
+
+        .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; gap: 16px; color: var(--muted); }
+        .empty-state .icon { font-size: 4rem; opacity: .3; }
+        .empty-state p { font-size: .9rem; }
+
+        /* ── QR Panel ── */
+        .qr-panel {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            padding: 32px;
+            display: flex;
+            gap: 40px;
+            align-items: flex-start;
+        }
+        .qr-left { flex-shrink: 0; text-align: center; }
+        .qr-container {
+            width: 240px; height: 240px;
+            background: white;
+            border-radius: 14px;
+            padding: 14px;
+            position: relative;
+            overflow: hidden;
+        }
+        .qr-container canvas { width: 100% !important; height: 100% !important; }
+        .qr-overlay {
+            position: absolute; inset: 0;
+            background: rgba(10,14,26,.85);
+            display: flex; align-items: center; justify-content: center;
+            flex-direction: column; gap: 10px;
+            border-radius: 14px;
+            font-size: .85rem; color: var(--muted);
+            text-align: center; padding: 16px;
+        }
+        .qr-overlay .icon { font-size: 2.5rem; }
+
+        /* Timer ring */
+        .timer-wrap { margin-top: 14px; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        .timer-ring { position: relative; width: 48px; height: 48px; }
+        .timer-ring svg { transform: rotate(-90deg); }
+        .timer-ring circle { fill: none; stroke-width: 4; }
+        .timer-ring .track { stroke: var(--border); }
+        .timer-ring .progress { stroke: var(--accent); stroke-linecap: round; transition: stroke-dashoffset .5s linear; }
+        .timer-text { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-family: 'Syne', sans-serif; font-size: .85rem; font-weight: 700; }
+        .timer-label { font-size: .78rem; color: var(--muted); }
+
+        .qr-right { flex: 1; }
+        .session-title { font-family: 'Syne', sans-serif; font-size: 1.4rem; font-weight: 800; margin-bottom: 6px; }
+        .session-meta { font-size: .82rem; color: var(--muted); margin-bottom: 24px; display: flex; gap: 16px; flex-wrap: wrap; }
+        .session-meta span { display: flex; align-items: center; gap: 5px; }
+
+        .status-badge {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 5px 12px; border-radius: 99px;
+            font-size: .78rem; font-weight: 600;
+            margin-bottom: 20px;
+        }
+        .status-badge.open   { background: rgba(16,185,129,.1); color: var(--success); border: 1px solid rgba(16,185,129,.25); }
+        .status-badge.closed { background: rgba(100,116,139,.1); color: var(--muted);   border: 1px solid var(--border); }
+        .status-badge .dot   { width:6px; height:6px; border-radius:50%; background:currentColor; }
+        .status-badge.open .dot { animation: pulse 1.5s ease-in-out infinite; }
+        @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:.3; } }
+
+        .action-btns { display: flex; gap: 10px; flex-wrap: wrap; }
+        .btn-open {
+            padding: 10px 22px; border-radius: 10px; border: none;
+            background: var(--success); color: #fff;
+            font-family: 'Syne', sans-serif; font-weight: 700; font-size: .88rem;
+            cursor: pointer; transition: all .2s;
+        }
+        .btn-open:hover { filter: brightness(1.1); }
+        .btn-close {
+            padding: 10px 22px; border-radius: 10px;
+            background: none; border: 1px solid var(--danger);
+            color: var(--danger); font-family: 'Syne', sans-serif; font-weight: 700; font-size: .88rem;
+            cursor: pointer; transition: all .2s;
+        }
+        .btn-close:hover { background: rgba(239,68,68,.08); }
+        .btn-disabled { opacity: .4; pointer-events: none; }
+
+        /* ── Attendance Table ── */
+        .attendance-panel {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            overflow: hidden;
+        }
+        .panel-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .panel-header h3 { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1rem; }
+        .counter { display: flex; align-items: center; gap: 8px; }
+        .count-badge { background: rgba(0,212,255,.1); border: 1px solid rgba(0,212,255,.2); color: var(--accent); padding: 3px 10px; border-radius: 99px; font-size: .8rem; font-weight: 600; }
+
+        table { width: 100%; border-collapse: collapse; }
+        th { padding: 10px 24px; text-align: left; font-size: .72rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); border-bottom: 1px solid var(--border); }
+        td { padding: 12px 24px; font-size: .85rem; border-bottom: 1px solid rgba(30,45,69,.5); }
+        tr:last-child td { border-bottom: none; }
+        tr.new-row td { animation: flashRow .8s ease-out; }
+        @keyframes flashRow { from { background: rgba(0,212,255,.08); } to { background: transparent; } }
+
+        .student-name { font-weight: 500; }
+        .student-code { font-size: .75rem; color: var(--accent); }
+        .time-chip { background: rgba(255,255,255,.04); border: 1px solid var(--border); border-radius: 6px; padding: 2px 8px; font-size: .78rem; font-family: monospace; }
+
+        .table-empty { padding: 40px; text-align: center; color: var(--muted); font-size: .88rem; }
+
+        /* ── Modal ── */
+        .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,.7); backdrop-filter:blur(4px); display:none; align-items:center; justify-content:center; z-index:200; }
+        .modal-overlay.show { display:flex; }
+        .modal { background:var(--surface2); border:1px solid var(--border); border-radius:18px; padding:32px; width:100%; max-width:440px; }
+        .modal h3 { font-family:'Syne',sans-serif; font-weight:700; font-size:1.15rem; margin-bottom:20px; }
+        .form-field { margin-bottom:16px; }
+        .form-field label { display:block; font-size:.78rem; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); margin-bottom:7px; }
+        .form-field input, .form-field select {
+            width:100%; background:rgba(255,255,255,.04); border:1px solid var(--border); border-radius:9px;
+            padding:10px 14px; color:var(--text); font-family:inherit; font-size:.9rem; outline:none;
+        }
+        .form-field input:focus, .form-field select:focus { border-color:var(--accent); }
+        .form-field select option { background:var(--surface2); }
+        .modal-actions { display:flex; gap:10px; margin-top:20px; justify-content:flex-end; }
+        .btn-primary { padding:9px 22px; background:linear-gradient(135deg,var(--accent),var(--accent2)); color:#fff; border:none; border-radius:9px; font-family:'Syne',sans-serif; font-weight:700; font-size:.88rem; cursor:pointer; }
+        .btn-secondary { padding:9px 22px; background:none; border:1px solid var(--border); color:var(--muted); border-radius:9px; font-family:'Syne',sans-serif; font-weight:600; font-size:.88rem; cursor:pointer; }
+
+        /* ── Toasts ── */
+        #toast { position:fixed; bottom:24px; right:24px; z-index:999; display:flex; flex-direction:column; gap:8px; }
+        .toast { padding:12px 18px; border-radius:10px; font-size:.85rem; font-weight:500; min-width:220px; box-shadow:0 8px 24px rgba(0,0,0,.4); animation:slideIn .3s ease; }
+        @keyframes slideIn { from { opacity:0; transform:translateX(20px); } to { opacity:1; transform:translateX(0); } }
+        .toast.success { background:#065f46; border:1px solid #059669; color:#6ee7b7; }
+        .toast.error   { background:#7f1d1d; border:1px solid #dc2626; color:#fca5a5; }
+        .toast.info    { background:#1e3a5f; border:1px solid #2563eb; color:#93c5fd; }
+
+        @media (max-width: 768px) {
+            main { grid-template-columns: 1fr; }
+            aside { display: none; }
+            .qr-panel { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <span class="header-logo">UPTAAPC Asistencias</span>
+   <div class="logo-container" style="display: flex; align-items: center; gap: 10px;">
+    <img src="logo.jpg" alt="Logo UPTAAPC" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">
+    <span class="logo-text" style="font-weight: bold; color: var(--accent2);">UPTAAPC Asistencias</span>
+</div> 
+</header>
+
+<main>
+    <!-- ── Sidebar: Asignaturas ── -->
+    <aside>
+        <div class="sidebar-title">Mis Asignaturas</div>
+        <div id="subjectList"></div>
+    </aside>
+
+    <!-- ── Contenido principal ── -->
+    <div class="content" id="mainContent">
+        <div class="empty-state">
+            <div class="icon">📚</div>
+            <p>Selecciona una asignatura para gestionar sesiones</p>
+        </div>
+    </div>
+</main>
+
+<!-- ── Modal: Nueva Sesión ── -->
+<div class="modal-overlay" id="newSessionModal">
+    <div class="modal">
+        <h3>➕ Nueva Sesión de Clase</h3>
+        <div class="form-field">
+            <label>Título (opcional)</label>
+            <input type="text" id="sessionTitle" placeholder="ej. Clase 12 — Recursión" />
+        </div>
+        <div class="form-field">
+            <label>Fecha</label>
+            <input type="date" id="sessionDate" />
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+            <div class="form-field">
+                <label>Inicio</label>
+                <input type="time" id="sessionStart" value="08:00" />
+            </div>
+            <div class="form-field">
+                <label>Fin</label>
+                <input type="time" id="sessionEnd" value="10:00" />
+            </div>
+        </div>
+        <div class="form-field">
+            <label>Rotación QR (segundos)</label>
+            <select id="sessionInterval">
+                <option value="10">10 segundos</option>
+                <option value="15" selected>15 segundos (recomendado)</option>
+                <option value="30">30 segundos</option>
+                <option value="60">1 minuto</option>
+            </select>
+        </div>
+        <div class="modal-actions">
+            <button class="btn-secondary" onclick="closeModal()">Cancelar</button>
+            <button class="btn-primary" onclick="createSession()">Crear Sesión</button>
+        </div>
+    </div>
+</div>
+
+<div id="toast"></div>
+
+<script src="/shared/api.js"></script>
+<script>
+// ── Estado global ──────────────────────────────────────────
+let subjects        = [];
+let activeSubjectId = null;
+let activeSessions  = [];
+let activeSessionId = null;
+let qrRefreshTimer  = null;
+let attendanceTimer = null;
+let timerInterval   = null;
+let knownAttendees  = new Set();
+
+// ── Boot ───────────────────────────────────────────────────
+(function init() {
+    if (!Auth.isLoggedIn()) { window.location.href = '/'; return; }
+    const user = Auth.getUser();
+    if (user.role === 'student') { window.location.href = '/student/'; return; }
+
+    document.getElementById('userName').textContent      = user.name;
+    document.getElementById('avatarInitial').textContent = user.name.charAt(0).toUpperCase();
+    document.getElementById('sessionDate').value = new Date().toISOString().split('T')[0];
+
+    loadSubjects();
+})();
+
+// ── Carga asignaturas ──────────────────────────────────────
+async function loadSubjects() {
+    try {
+        const data = await API.mySubjects();
+        subjects = data.subjects || [];
+        renderSubjectList();
+    } catch (e) { showToast(e.message, 'error'); }
+}
+
+function renderSubjectList() {
+    const el = document.getElementById('subjectList');
+    if (!subjects.length) {
+        el.innerHTML = '<p style="font-size:.8rem;color:var(--muted);padding:8px;">No tienes asignaturas asignadas.</p>';
+        return;
+    }
+    el.innerHTML = subjects.map(s => `
+        <button class="subject-btn ${s.id === activeSubjectId ? 'active' : ''}"
+                onclick="selectSubject(${s.id})">
+            <div class="code">${s.code}</div>
+            <div class="name">${s.name}</div>
+            <div class="count">👥 ${s.student_count || 0} estudiantes</div>
+        </button>
+    `).join('');
+}
+
+// ── Seleccionar asignatura ─────────────────────────────────
+async function selectSubject(id) {
+    activeSubjectId = id;
+    activeSessionId = null;
+    stopQRRefresh();
+    renderSubjectList();
+
+    try {
+        const data = await API.getSessions(id);
+        activeSessions = data.sessions || [];
+        renderContent();
+    } catch (e) { showToast(e.message, 'error'); }
+}
+
+// ── Render contenido principal ─────────────────────────────
+function renderContent() {
+    const subj = subjects.find(s => s.id === activeSubjectId);
+    const main = document.getElementById('mainContent');
+
+    const sessionsHTML = activeSessions.length
+        ? activeSessions.map(s => `
+            <div style="
+                background:var(--surface2); border:1px solid var(--border);
+                border-radius:12px; padding:16px 20px;
+                display:flex; align-items:center; justify-content:space-between; gap:16px;
+                cursor:pointer; transition:border-color .2s;
+            " onmouseenter="this.style.borderColor='rgba(0,212,255,.3)'"
+               onmouseleave="this.style.borderColor='var(--border)'"
+               onclick="openSessionView(${s.id})">
+                <div>
+                    <div style="font-weight:600;">${s.title || 'Sesión sin título'}</div>
+                    <div style="font-size:.78rem; color:var(--muted); margin-top:3px;">
+                        📅 ${formatDate(s.session_date)} &nbsp;·&nbsp; 🕐 ${s.scheduled_start}–${s.scheduled_end}
+                    </div>
+                </div>
+                <div style="display:flex; align-items:center; gap:12px;">
+                    <span style="font-size:.78rem; color:var(--success);">✅ ${s.attendance_count} asistentes</span>
+                    <span style="font-size:.75rem; padding:3px 10px; border-radius:99px; border:1px solid ${s.is_open ? 'rgba(16,185,129,.3)' : 'var(--border)'}; color:${s.is_open ? 'var(--success)' : 'var(--muted)'}">
+                        ${s.is_open ? '● Abierta' : 'Cerrada'}
+                    </span>
+                </div>
+            </div>
+        `).join('')
+        : '<p style="color:var(--muted);font-size:.88rem; padding:8px 0;">No hay sesiones creadas aún.</p>';
+
+    main.innerHTML = `
+        <div>
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;">
+                <h2 style="font-family:Syne,sans-serif; font-size:1.4rem; font-weight:800;">${subj?.name}</h2>
+                <span style="font-size:.78rem; color:var(--accent); font-weight:600;">${subj?.code}</span>
+            </div>
+            <p style="font-size:.82rem; color:var(--muted); margin-bottom:24px;">Semestre ${subj?.semester}</p>
+        </div>
+
+        <div style="background:var(--surface); border:1px solid var(--border); border-radius:18px; overflow:hidden;">
+            <div style="padding:20px 24px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between;">
+                <h3 style="font-family:Syne,sans-serif; font-weight:700;">Sesiones de Clase</h3>
+                <button class="new-session-btn" style="width:auto; margin:0;" onclick="showNewSessionModal()">
+                    ＋ Nueva sesión
+                </button>
+            </div>
+            <div style="padding:16px 20px; display:flex; flex-direction:column; gap:10px;" id="sessionsList">
+                ${sessionsHTML}
+            </div>
+        </div>
+    `;
+}
+
+// ── Vista de sesión individual con QR ─────────────────────
+async function openSessionView(sessionId) {
+    activeSessionId = sessionId;
+    stopQRRefresh();
+    knownAttendees.clear();
+
+    const sess = activeSessions.find(s => s.id === sessionId);
+    const main = document.getElementById('mainContent');
+
+    main.innerHTML = `
+        <button onclick="selectSubject(${activeSubjectId})"
+            style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:.85rem;display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+            ← Volver a sesiones
+        </button>
+
+        <div class="qr-panel" id="qrPanel">
+            <div class="qr-left">
+                <div class="qr-container" id="qrContainer">
+                    <canvas id="qrCanvas"></canvas>
+                    <div class="qr-overlay" id="qrOverlay">
+                        <span class="icon">🔒</span>
+                        <span>Abre la sesión para<br>mostrar el QR</span>
+                    </div>
+                </div>
+                <div class="timer-wrap" id="timerWrap" style="display:none;">
+                    <div class="timer-ring">
+                        <svg width="48" height="48" viewBox="0 0 48 48">
+                            <circle class="track" cx="24" cy="24" r="20" />
+                            <circle class="progress" id="timerArc" cx="24" cy="24" r="20"
+                                stroke-dasharray="125.66" stroke-dashoffset="0" />
+                        </svg>
+                        <div class="timer-text" id="timerText">15</div>
+                    </div>
+                    <span class="timer-label">segundos para<br>el próximo QR</span>
+                </div>
+            </div>
+            <div class="qr-right">
+                <div class="session-title">${sess?.title || 'Sesión de clase'}</div>
+                <div class="session-meta">
+                    <span>📅 ${formatDate(sess?.session_date)}</span>
+                    <span>🕐 ${sess?.scheduled_start} – ${sess?.scheduled_end}</span>
+                </div>
+                <div id="statusBadge" class="status-badge ${sess?.is_open ? 'open' : 'closed'}">
+                    <span class="dot"></span>
+                    ${sess?.is_open ? 'Sesión Abierta' : 'Sesión Cerrada'}
+                </div>
+                <div class="action-btns">
+                    <button id="btnOpen" class="btn-open ${sess?.is_open ? 'btn-disabled' : ''}"
+                            onclick="openSession()">▶ Abrir Sesión</button>
+                    <button id="btnClose" class="btn-close ${!sess?.is_open ? 'btn-disabled' : ''}"
+                            onclick="closeSession()">■ Cerrar Sesión</button>
+                </div>
+                <p style="font-size:.78rem; color:var(--muted); margin-top:16px; max-width:300px; line-height:1.6;">
+                    El QR rota automáticamente cada <strong style="color:var(--accent);">${sess?.qr_interval_sec || 15} segundos</strong>
+                    para evitar que sea compartido. Los estudiantes deben escanearlo en tiempo real.
+                </p>
+            </div>
+        </div>
+
+        <div class="attendance-panel">
+            <div class="panel-header">
+                <h3>Lista de Asistencias</h3>
+                <div class="counter">
+                    <span id="attendCount" class="count-badge">0 asistentes</span>
+                    <span id="totalCount" style="font-size:.78rem;color:var(--muted);">de — inscritos</span>
+                </div>
+            </div>
+            <div id="attendanceTable">
+                <div class="table-empty">Aún no hay asistencias registradas.</div>
+            </div>
+        </div>
+    `;
+
+    // Si está abierta, mostrar QR inmediatamente
+    if (sess?.is_open) {
+        await refreshQR();
+        startQRRefresh(sess?.qr_interval_sec || 15);
+    }
+    loadAttendances();
+    // Poll asistencias cada 5 s
+    attendanceTimer = setInterval(loadAttendances, 5000);
+}
+
+// ── Abrir / Cerrar sesión ──────────────────────────────────
+async function openSession() {
+    try {
+        await API.openSession(activeSessionId);
+        showToast('Sesión abierta. QR activo.', 'success');
+        updateSessionStatus(true);
+        await refreshQR();
+        const sess = activeSessions.find(s => s.id === activeSessionId);
+        startQRRefresh(sess?.qr_interval_sec || 15);
+        const i = activeSessions.findIndex(s => s.id === activeSessionId);
+        if (i >= 0) activeSessions[i].is_open = 1;
+    } catch (e) { showToast(e.message, 'error'); }
+}
+
+async function closeSession() {
+    try {
+        await API.closeSession(activeSessionId);
+        stopQRRefresh();
+        showToast('Sesión cerrada.', 'info');
+        updateSessionStatus(false);
+        document.getElementById('qrOverlay').innerHTML = '<span class="icon">🔒</span><span>Sesión cerrada</span>';
+        document.getElementById('qrOverlay').style.display = 'flex';
+        document.getElementById('timerWrap').style.display = 'none';
+        const i = activeSessions.findIndex(s => s.id === activeSessionId);
+        if (i >= 0) activeSessions[i].is_open = 0;
+    } catch (e) { showToast(e.message, 'error'); }
+}
+
+function updateSessionStatus(isOpen) {
+    const badge  = document.getElementById('statusBadge');
+    const btnO   = document.getElementById('btnOpen');
+    const btnC   = document.getElementById('btnClose');
+    if (!badge) return;
+    badge.className = `status-badge ${isOpen ? 'open' : 'closed'}`;
+    badge.innerHTML = `<span class="dot"></span>${isOpen ? 'Sesión Abierta' : 'Sesión Cerrada'}`;
+    btnO.classList.toggle('btn-disabled',  isOpen);
+    btnC.classList.toggle('btn-disabled', !isOpen);
+}
+
+// ── QR Refresh ─────────────────────────────────────────────
+async function refreshQR() {
+    try {
+        const data = await API.getQRPayload(activeSessionId);
+        await renderQR(data.payload);
+
+        const overlay = document.getElementById('qrOverlay');
+        if (overlay) overlay.style.display = 'none';
+
+        const tw = document.getElementById('timerWrap');
+        if (tw) tw.style.display = 'flex';
+
+        startTimerRing(data.remainingMs, data.intervalSec);
+    } catch (e) {
+        if (e.status !== 409) showToast('Error al obtener QR: ' + e.message, 'error');
+    }
+}
+
+async function renderQR(payload) {
+    const canvas = document.getElementById('qrCanvas');
+    if (!canvas) return;
+    await QRCode.toCanvas(canvas, payload, {
+        width: 212, margin: 0,
+        color: { dark: '#0a0e1a', light: '#ffffff' },
+    });
+}
+
+function startQRRefresh(intervalSec) {
+    stopQRRefresh();
+    qrRefreshTimer = setInterval(() => refreshQR(), intervalSec * 1000);
+}
+
+function stopQRRefresh() {
+    clearInterval(qrRefreshTimer);
+    clearInterval(timerInterval);
+    clearInterval(attendanceTimer);
+    qrRefreshTimer = attendanceTimer = timerInterval = null;
+}
+
+// ── Timer Ring ─────────────────────────────────────────────
+function startTimerRing(remainingMs, totalSec) {
+    clearInterval(timerInterval);
+    const arc    = document.getElementById('timerArc');
+    const label  = document.getElementById('timerText');
+    const total  = totalSec * 1000;
+    const circum = 125.66;
+
+    const tick = () => {
+        const pct    = Math.max(0, remainingMs / total);
+        const offset = circum * (1 - pct);
+        if (arc)   arc.style.strokeDashoffset   = offset;
+        if (label) label.textContent = Math.ceil(remainingMs / 1000);
+        remainingMs -= 500;
+        if (remainingMs < 0) remainingMs = 0;
+    };
+    tick();
+    timerInterval = setInterval(tick, 500);
+}
+
+// ── Asistencias ────────────────────────────────────────────
+async function loadAttendances() {
+    if (!activeSessionId) return;
+    try {
+        const data = await API.getAttendances(activeSessionId);
+        const el   = document.getElementById('attendanceTable');
+        if (!el) return;
+
+        document.getElementById('attendCount').textContent = `${data.attended} asistentes`;
+        document.getElementById('totalCount').textContent  = `de ${data.total} inscritos`;
+
+        if (!data.records.length) {
+            el.innerHTML = '<div class="table-empty">Aún no hay asistencias registradas.</div>';
+            return;
+        }
+
+        el.innerHTML = `
+            <table>
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Estudiante</th>
+                        <th>Matrícula</th>
+                        <th>Hora de Registro</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${data.records.map((r, i) => `
+                        <tr class="${!knownAttendees.has(r.student_id) ? 'new-row' : ''}">
+                            <td style="color:var(--muted);">${i + 1}</td>
+                            <td>
+                                <div class="student-name">${r.name}</div>
+                                <div style="font-size:.75rem;color:var(--muted);">${r.email}</div>
+                            </td>
+                            <td><span class="student-code">${r.student_code || '—'}</span></td>
+                            <td><span class="time-chip">${formatTime(r.scanned_at)}</span></td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        `;
+
+        data.records.forEach(r => knownAttendees.add(r.student_id));
+    } catch (e) { /* silencioso, no interrumpir UX */ }
+}
+
+// ── Modal nueva sesión ─────────────────────────────────────
+function showNewSessionModal() {
+    document.getElementById('newSessionModal').classList.add('show');
+}
+function closeModal() {
+    document.getElementById('newSessionModal').classList.remove('show');
+}
+
+async function createSession() {
+    const title    = document.getElementById('sessionTitle').value.trim();
+    const date     = document.getElementById('sessionDate').value;
+    const start    = document.getElementById('sessionStart').value;
+    const end      = document.getElementById('sessionEnd').value;
+    const interval = parseInt(document.getElementById('sessionInterval').value);
+
+    if (!date || !start || !end) {
+        showToast('Completa fecha e horarios.', 'error');
+        return;
+    }
+
+    try {
+        await API.createSession({
+            subjectId: activeSubjectId,
+            title:     title || null,
+            sessionDate: date, start, end,
+            intervalSec: interval,
+        });
+        closeModal();
+        showToast('Sesión creada.', 'success');
+        const data = await API.getSessions(activeSubjectId);
+        activeSessions = data.sessions || [];
+        renderContent();
+    } catch (e) { showToast(e.message, 'error'); }
+}
+
+// ── Helpers ────────────────────────────────────────────────
+function logout() {
+    stopQRRefresh();
+    Auth.clear();
+    window.location.href = '/';
+}
+
+function showToast(msg, type = 'info') {
+    const wrap = document.getElementById('toast');
+    const el   = document.createElement('div');
+    el.className = `toast ${type}`;
+    el.textContent = msg;
+    wrap.appendChild(el);
+    setTimeout(() => el.remove(), 4000);
+}
+</script>
+</body>
+</html>

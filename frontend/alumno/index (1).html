@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+    <title>UPTAAPC Asistencias— Estudiante</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+    <!-- html5-qrcode for camera scanning -->
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    <style>
+             :root {
+         --bg: linear-gradient(135deg, #990000, #4a0000); 
+    --surface: #220505;      
+    --border: #551111;
+    --accent: #d90429;       
+    --success: #10b981;
+    --text: #ffffff;
+    --muted: #ffcccc;
+    --r: 12px;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'DM Sans', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ── Header ── */
+        header {
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            padding: 0 20px;
+            height: 56px;
+            display: flex; align-items: center; justify-content: space-between;
+            position: sticky; top: 0; z-index: 50;
+        }
+        .logo { font-family: 'Syne', sans-serif; font-weight: 800; background: linear-gradient(90deg, var(--accent), var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .user-chip { display:flex; align-items:center; gap:8px; font-size:.82rem; }
+        .avatar { width:28px; height:28px; background:linear-gradient(135deg,var(--accent),var(--accent2)); border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:.75rem; }
+        .btn-sm { background:none; border:1px solid var(--border); color:var(--muted); padding:4px 10px; border-radius:7px; cursor:pointer; font-size:.75rem; }
+        .btn-sm:hover { border-color:var(--danger); color:var(--danger); }
+
+        /* ── Tab Nav ── */
+        .tabs {
+            display: flex;
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+        }
+        .tab {
+            flex: 1; padding: 13px;
+            text-align: center;
+            font-family: 'Syne', sans-serif;
+            font-weight: 700; font-size: .82rem;
+            cursor: pointer;
+            border: none; background: none;
+            color: var(--muted);
+            border-bottom: 2px solid transparent;
+            transition: all .2s;
+        }
+        .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+        /* ── Views ── */
+        .view { display: none; flex: 1; padding: 20px; flex-direction: column; gap: 16px; }
+        .view.active { display: flex; }
+
+        /* ── Scanner Card ── */
+        .scanner-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            overflow: hidden;
+        }
+        .scanner-header { padding: 20px; border-bottom: 1px solid var(--border); }
+        .scanner-header h2 { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.15rem; }
+        .scanner-header p { font-size: .82rem; color: var(--muted); margin-top: 4px; }
+
+        /* Camera viewport */
+        #reader {
+            position: relative;
+            background: #000;
+            aspect-ratio: 1;
+            max-width: 320px;
+            margin: 20px auto;
+            border-radius: 14px;
+            overflow: hidden;
+        }
+        /* Override html5-qrcode styles */
+        #reader video { border-radius: 14px !important; }
+        #reader__scan_region { border-radius: 14px; }
+        #reader__dashboard { display: none !important; }
+        #reader img { display: none; }
+
+        .scanner-frame {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            z-index: 10;
+        }
+        .scanner-frame::before,
+        .scanner-frame::after {
+            content: '';
+            position: absolute;
+            width: 50px; height: 50px;
+            border-color: var(--accent);
+            border-style: solid;
+        }
+        .scanner-frame::before { top: 12px; left: 12px; border-width: 3px 0 0 3px; border-radius: 6px 0 0 0; }
+        .scanner-frame::after  { bottom: 12px; right: 12px; border-width: 0 3px 3px 0; border-radius: 0 0 6px 0; }
+
+        /* Scanning line animation */
+        .scan-line {
+            position: absolute;
+            left: 12px; right: 12px;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--accent), transparent);
+            box-shadow: 0 0 8px var(--accent);
+            animation: scanMove 2s ease-in-out infinite;
+            z-index: 11;
+        }
+        @keyframes scanMove {
+            0%   { top: 20px; opacity: 0; }
+            10%  { opacity: 1; }
+            90%  { opacity: 1; }
+            100% { top: calc(100% - 20px); opacity: 0; }
+        }
+
+        .scanner-placeholder {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            height: 100%; gap: 12px; color: var(--muted); text-align: center; padding: 20px;
+        }
+        .scanner-placeholder .icon { font-size: 3rem; opacity: .4; }
+
+        .btn-start {
+            display: block; width: calc(100% - 40px); margin: 0 20px 20px;
+            padding: 13px;
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            color: #fff; border: none; border-radius: 11px;
+            font-family: 'Syne', sans-serif; font-weight: 700; font-size: .95rem;
+            cursor: pointer; transition: all .2s;
+        }
+        .btn-start:hover { filter: brightness(1.1); transform: translateY(-1px); }
+        .btn-start:disabled { opacity: .4; cursor: not-allowed; transform: none; }
+        .btn-stop {
+            display: block; width: calc(100% - 40px); margin: 0 20px 20px;
+            padding: 13px;
+            background: none; border: 1px solid var(--border);
+            color: var(--muted); border-radius: 11px;
+            font-family: 'Syne', sans-serif; font-weight: 700; font-size: .95rem;
+            cursor: pointer; transition: all .2s;
+        }
+
+        /* ── Result overlay ── */
+        .result-overlay {
+            display: none;
+            position: fixed; inset: 0;
+            background: rgba(10,14,26,.9);
+            backdrop-filter: blur(8px);
+            z-index: 200;
+            align-items: center; justify-content: center;
+            flex-direction: column;
+            text-align: center; padding: 32px;
+        }
+        .result-overlay.show { display: flex; }
+        .result-icon { font-size: 5rem; margin-bottom: 20px; animation: popIn .5s cubic-bezier(.34,1.56,.64,1); }
+        @keyframes popIn { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        .result-title { font-family: 'Syne', sans-serif; font-size: 1.6rem; font-weight: 800; margin-bottom: 10px; }
+        .result-detail { color: var(--muted); font-size: .9rem; line-height: 1.7; max-width: 280px; }
+        .result-detail strong { color: var(--text); }
+        .btn-dismiss {
+            margin-top: 28px;
+            padding: 11px 28px;
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            color: #fff; border: none; border-radius: 11px;
+            font-family: 'Syne', sans-serif; font-weight: 700; font-size: .9rem;
+            cursor: pointer;
+        }
+        .result-error .result-icon { animation-name: shake; }
+        @keyframes shake { 0%,100%{transform:rotate(0)} 20%{transform:rotate(-10deg)} 40%{transform:rotate(10deg)} 60%{transform:rotate(-8deg)} 80%{transform:rotate(8deg)} }
+
+        /* ── History ── */
+        .history-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            overflow: hidden;
+        }
+        .hcard-header { padding: 18px 20px; border-bottom: 1px solid var(--border); }
+        .hcard-header h3 { font-family: 'Syne', sans-serif; font-weight: 700; font-size: .95rem; }
+
+        .hist-item {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 14px 20px;
+            border-bottom: 1px solid rgba(30,45,69,.5);
+            transition: background .15s;
+        }
+        .hist-item:last-child { border-bottom: none; }
+        .hist-item:hover { background: rgba(255,255,255,.02); }
+        .hist-left { flex: 1; }
+        .hist-subject { font-weight: 600; font-size: .88rem; }
+        .hist-code { font-size: .72rem; color: var(--accent); font-weight: 600; }
+        .hist-title { font-size: .78rem; color: var(--muted); margin-top: 2px; }
+        .hist-right { text-align: right; }
+        .hist-date { font-size: .78rem; color: var(--muted); }
+        .hist-time { font-size: .75rem; font-family: monospace; background: rgba(0,212,255,.08); color: var(--accent); padding: 2px 8px; border-radius: 5px; margin-top: 3px; display:inline-block; }
+
+        .check-dot { width:8px; height:8px; border-radius:50%; background:var(--success); flex-shrink:0; margin-right:12px; }
+
+        .empty-hist { padding: 40px 20px; text-align: center; color: var(--muted); font-size: .88rem; }
+
+        /* ── Profile ── */
+        .profile-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 28px 24px;
+            display: flex; flex-direction: column; align-items: center; gap: 10px;
+        }
+        .profile-avatar { width: 72px; height: 72px; background: linear-gradient(135deg, var(--accent), var(--accent2)); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: 700; }
+        .profile-name { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.2rem; }
+        .profile-email { font-size: .82rem; color: var(--muted); }
+        .profile-code { display: flex; align-items: center; gap: 6px; background: rgba(0,212,255,.06); border: 1px solid rgba(0,212,255,.15); border-radius: 99px; padding: 4px 14px; font-size: .8rem; color: var(--accent); font-weight: 600; margin-top: 4px; }
+
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; margin-top: 4px; }
+        .stat-box { background: rgba(255,255,255,.03); border: 1px solid var(--border); border-radius: 12px; padding: 16px; text-align: center; }
+        .stat-num { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.8rem; color: var(--accent); }
+        .stat-label { font-size: .72rem; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin-top: 4px; }
+
+        .loading { display:inline-block; width:18px; height:18px; border:2px solid rgba(255,255,255,.2); border-top-color:var(--accent); border-radius:50%; animation:spin .7s linear infinite; }
+        @keyframes spin { to { transform:rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+<header>
+    <span class="logo">🎓 UPTAAPC Asistencias</span>
+    <div class="user-chip">
+        <div class="avatar" id="avatarInitial">?</div>
+        <span id="userName"></span>
+        <button class="btn-sm" onclick="logout()">Salir</button>
+    </div>
+</header>
+
+<!-- Tab navigation -->
+<div class="tabs">
+    <button class="tab active" onclick="switchTab('scan')">📷 Escanear</button>
+    <button class="tab" onclick="switchTab('history')">📋 Historial</button>
+    <button class="tab" onclick="switchTab('profile')">👤 Perfil</button>
+</div>
+
+<!-- ── SCAN VIEW ── -->
+<div class="view active" id="view-scan">
+    <div class="scanner-card">
+        <div class="scanner-header">
+            <h2>Registrar Asistencia</h2>
+            <p>Escanea el QR que muestra tu profesor</p>
+        </div>
+
+        <div id="reader">
+            <div class="scanner-placeholder" id="scannerPlaceholder">
+                <div class="icon">📷</div>
+                <p style="font-size:.85rem;">Presiona el botón para activar la cámara</p>
+            </div>
+            <div class="scanner-frame" id="scannerFrame" style="display:none;">
+                <div class="scan-line"></div>
+            </div>
+        </div>
+
+        <button class="btn-start" id="btnStart" onclick="startScanner()">
+            📷 Activar Cámara y Escanear
+        </button>
+        <button class="btn-stop" id="btnStop" style="display:none;" onclick="stopScanner()">
+            Detener Cámara
+        </button>
+    </div>
+
+    <div style="background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:16px 20px;">
+        <p style="font-size:.8rem; color:var(--muted); line-height:1.7;">
+            💡 <strong style="color:var(--text);">Instrucciones:</strong> Apunta la cámara al QR que aparece en la pantalla del profesor.
+            El QR cambia cada pocos segundos. Si ves un error, espera al nuevo QR y vuelve a intentarlo.
+        </p>
+    </div>
+</div>
+
+<!-- ── HISTORY VIEW ── -->
+<div class="view" id="view-history">
+    <div class="history-card">
+        <div class="hcard-header">
+            <h3>Mis Asistencias Registradas</h3>
+        </div>
+        <div id="historyList">
+            <div class="empty-hist"><span class="loading"></span></div>
+        </div>
+    </div>
+</div>
+
+<!-- ── PROFILE VIEW ── -->
+<div class="view" id="view-profile">
+    <div class="profile-card">
+        <div class="profile-avatar" id="profileInitial">?</div>
+        <div class="profile-name" id="profileName">—</div>
+        <div class="profile-email" id="profileEmail">—</div>
+        <div class="profile-code" id="profileCode">—</div>
+        <div class="stats-grid">
+            <div class="stat-box">
+                <div class="stat-num" id="statTotal">—</div>
+                <div class="stat-label">Asistencias</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-num" id="statSubjects">—</div>
+                <div class="stat-label">Materias</div>
+            </div>
+        </div>
+    </div>
+
+    <button class="btn-stop" onclick="logout()" style="width:100%; margin:0; border-color:var(--danger); color:var(--danger);">
+        Cerrar Sesión
+    </button>
+</div>
+
+<!-- ── Result Overlay ── -->
+<div class="result-overlay" id="resultOverlay">
+    <div class="result-icon" id="resultIcon">✅</div>
+    <div class="result-title" id="resultTitle"></div>
+    <div class="result-detail" id="resultDetail"></div>
+    <button class="btn-dismiss" onclick="dismissResult()">Continuar</button>
+</div>
+
+<script src="/shared/api.js"></script>
+<script>
+// ── Estado global ──────────────────────────────────────────
+let html5QrCode   = null;
+let isScanning    = false;
+let lastScanTime  = 0;
+let SCAN_COOLDOWN = 3000; // 3 s de cooldown entre escaneos
+
+// ── Boot ───────────────────────────────────────────────────
+(function init() {
+    if (!Auth.isLoggedIn()) { window.location.href = '/'; return; }
+    const user = Auth.getUser();
+    if (user.role !== 'student') { window.location.href = '/teacher/'; return; }
+
+    document.getElementById('userName').textContent      = user.name.split(' ')[0];
+    document.getElementById('avatarInitial').textContent = user.name.charAt(0).toUpperCase();
+    document.getElementById('profileInitial').textContent = user.name.charAt(0).toUpperCase();
+    document.getElementById('profileName').textContent    = user.name;
+    document.getElementById('profileEmail').textContent   = user.email;
+    document.getElementById('profileCode').textContent    = '🎓 ' + (user.studentCode || 'Sin matrícula');
+})();
+
+// ── Tab switching ──────────────────────────────────────────
+function switchTab(name) {
+    document.querySelectorAll('.tab').forEach((t, i) =>
+        t.classList.toggle('active', ['scan','history','profile'][i] === name));
+    document.querySelectorAll('.view').forEach(v =>
+        v.classList.toggle('active', v.id === `view-${name}`));
+
+    if (name === 'history') loadHistory();
+    if (name === 'profile') loadProfile();
+}
+
+// ── QR Scanner ────────────────────────────────────────────
+async function startScanner() {
+    const btn = document.getElementById('btnStart');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="loading"></span> Activando...';
+
+    try {
+        html5QrCode = new Html5Qrcode('reader');
+
+        const config = {
+            fps: 10,
+            qrbox: { width: 220, height: 220 },
+            aspectRatio: 1.0,
+            experimentalFeatures: { useBarCodeDetectorIfSupported: true },
+        };
+
+        await html5QrCode.start(
+            { facingMode: 'environment' },
+            config,
+            onQRScanned,
+            () => {} // error silencioso (frame sin QR)
+        );
+
+        isScanning = true;
+        document.getElementById('scannerPlaceholder').style.display = 'none';
+        document.getElementById('scannerFrame').style.display = 'block';
+        document.getElementById('btnStart').style.display = 'none';
+        document.getElementById('btnStop').style.display  = 'block';
+
+    } catch (err) {
+        btn.disabled  = false;
+        btn.innerHTML = '📷 Activar Cámara y Escanear';
+
+        let msg = 'No se pudo acceder a la cámara.';
+        if (err.message?.includes('Permission'))  msg = 'Permiso de cámara denegado. Revisa la configuración de tu navegador.';
+        if (err.message?.includes('NotFound'))    msg = 'No se encontró cámara en este dispositivo.';
+        if (err.message?.includes('HTTPS'))       msg = 'La cámara requiere conexión HTTPS.';
+
+        showError('Sin acceso a la cámara', msg);
+    }
+}
+
+async function stopScanner() {
+    if (html5QrCode && isScanning) {
+        try { await html5QrCode.stop(); } catch { /* ignore */ }
+        html5QrCode = null;
+        isScanning  = false;
+    }
+    document.getElementById('scannerPlaceholder').style.display = 'flex';
+    document.getElementById('scannerFrame').style.display = 'none';
+    document.getElementById('btnStart').style.display = 'block';
+    document.getElementById('btnStop').style.display  = 'none';
+    document.getElementById('btnStart').disabled = false;
+    document.getElementById('btnStart').innerHTML = '📷 Activar Cámara y Escanear';
+}
+
+// ── Callback al detectar QR ────────────────────────────────
+async function onQRScanned(decodedText) {
+    const now = Date.now();
+    if (now - lastScanTime < SCAN_COOLDOWN) return;
+    lastScanTime = now;
+
+    // Vibración táctil (móvil)
+    if (navigator.vibrate) navigator.vibrate([50, 30, 50]);
+
+    // Detener escáner mientras procesamos
+    await stopScanner();
+
+    try {
+        // Validar que el QR tenga el formato esperado
+        JSON.parse(decodedText); // lanzará si no es JSON válido
+
+        const data = await API.scan(decodedText);
+
+        showSuccess(
+            '¡Asistencia Registrada!',
+            `<strong>${data.data.subjectCode} · ${data.data.subjectName}</strong><br>
+             ${data.data.sessionTitle || 'Sesión de clase'}<br>
+             📅 ${formatDate(data.data.sessionDate)}<br>
+             🕐 ${formatTime(data.data.scannedAt)}`
+        );
+
+    } catch (err) {
+        if (err.message?.includes('JSON')) {
+            showError('QR Inválido', 'Este QR no corresponde al sistema de asistencias.');
+        } else {
+            showError('Error al registrar', err.message);
+        }
+    }
+}
+
+// ── Overlays de resultado ──────────────────────────────────
+function showSuccess(title, detail) {
+    const o = document.getElementById('resultOverlay');
+    o.className = 'result-overlay show';
+    document.getElementById('resultIcon').textContent  = '✅';
+    document.getElementById('resultTitle').textContent = title;
+    document.getElementById('resultDetail').innerHTML  = detail;
+}
+
+function showError(title, detail) {
+    const o = document.getElementById('resultOverlay');
+    o.className = 'result-overlay result-error show';
+    document.getElementById('resultIcon').textContent  = '❌';
+    document.getElementById('resultTitle').textContent = title;
+    document.getElementById('resultDetail').textContent = detail;
+}
+
+function dismissResult() {
+    document.getElementById('resultOverlay').className = 'result-overlay';
+}
+
+// ── Historial ──────────────────────────────────────────────
+async function loadHistory() {
+    const el = document.getElementById('historyList');
+    el.innerHTML = '<div class="empty-hist"><span class="loading"></span></div>';
+
+    try {
+        const data = await API.myAttendances();
+        const records = data.records || [];
+
+        if (!records.length) {
+            el.innerHTML = '<div class="empty-hist">No tienes asistencias registradas aún.</div>';
+            return;
+        }
+
+        el.innerHTML = records.map(r => `
+            <div class="hist-item">
+                <div class="check-dot"></div>
+                <div class="hist-left">
+                    <div class="hist-code">${r.subject_code}</div>
+                    <div class="hist-subject">${r.subject_name}</div>
+                    <div class="hist-title">${r.title || 'Clase ' + r.session_date}</div>
+                </div>
+                <div class="hist-right">
+                    <div class="hist-date">${formatDate(r.session_date)}</div>
+                    <div class="hist-time">${formatTime(r.scanned_at)}</div>
+                </div>
+            </div>
+        `).join('');
+    } catch (e) {
+        el.innerHTML = `<div class="empty-hist">Error al cargar historial.</div>`;
+    }
+}
+
+// ── Perfil ─────────────────────────────────────────────────
+async function loadProfile() {
+    try {
+        const data = await API.myAttendances();
+        const records = data.records || [];
+        const subjects = [...new Set(records.map(r => r.subject_code))];
+        document.getElementById('statTotal').textContent    = records.length;
+        document.getElementById('statSubjects').textContent = subjects.length;
+    } catch { /* silencioso */ }
+}
+
+// ── Logout ─────────────────────────────────────────────────
+async function logout() {
+    await stopScanner();
+    Auth.clear();
+    window.location.href = '/';
+}
+
+// Limpiar al salir de la página
+window.addEventListener('beforeunload', () => {
+    if (isScanning && html5QrCode) {
+        html5QrCode.stop().catch(() => {});
+    }
+});
+</script>
+</body>
+</html>
