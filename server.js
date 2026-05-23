@@ -1,18 +1,17 @@
 /**
  * server.js - Punto de entrada del servidor
- * Sistema de Asistencias por QR · Node.js + Express + SQLite
+ * Sistema de Asistencias por QR - Node.js + Express + SQLite
  */
 
 'use strict';
-// Forzar la creación de tu usuario administrador
-require('./seed');
-const express    = require('express');
-const cors       = require('cors');
-const helmet     = require('helmet');
-const rateLimit  = require('express-rate-limit');
-const morgan     = require('morgan');
-const path       = require('path');
-const { initDB } = require('./config/database');
+
+const express     = require('express');
+const cors        = require('cors');
+const helmet      = require('helmet');
+const rateLimit   = require('express-rate-limit');
+const morgan      = require('morgan');
+const path        = require('path');
+const { initDB }  = require('./config/database');
 
 // -- Rutas de la API (Se cargan antes de los estáticos)
 const authRoutes       = require('./routes/auth');
@@ -63,10 +62,12 @@ app.get('/profesor*', (_, res) => {
 app.get('/alumno*', (_, res) => {
     res.sendFile(path.join(__dirname, 'frontend/alumno/index.html'));
 });
-// Ruta para mostrar la pantalla de registro (AGREGADA AQUÍ EN LA LÍNEA 65)
+
+// Ruta para mostrar la pantalla de registro
 app.get('/registro', (req, res) => {
     res.sendFile(path.join(__dirname, 'frontend/registro.html'));
 });
+
 app.get('*', (_, res) => {
     res.sendFile(path.join(__dirname, 'frontend/inicio.html'));
 });
@@ -81,7 +82,13 @@ app.use((err, req, res, next) => {
 
 // -- Arranque del Servidor
 (async () => {
+    // 1. Esperamos que la base de datos despierte
     await initDB();
+    
+    // 2. Ejecutamos tu sembrador con la base de datos ya lista
+    require('./seed');
+
+    // 3. Encendemos el sistema
     app.listen(PORT, () => {
         console.log(`\n🚀 QR Attendance System corriendo en http://localhost:${PORT}`);
         console.log(`  • API:      http://localhost:${PORT}/api`);
