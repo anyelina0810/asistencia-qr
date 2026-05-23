@@ -1,30 +1,28 @@
 const bcrypt = require('bcryptjs');
-const { initDB } = require('./config/database'); // Ajustado a tu línea 14 de server.js
+const { getDB } = require('./config/database'); 
 
-// Obtenemos la base de datos llamando a la función correcta de tu proyecto
-const db = initDB();
+// Conectamos a la base de datos activa
+const db = getDB();
 
-// Tus datos de prueba como Administradora Suprema
 const miCedula = '31698570'; 
 const miNombre = 'Anyelina Gonzalez';
-const miClavePlana = 'admin123'; // Esta será tu contraseña para entrar
-const miEmail = 'anyelinahg8@gmail.com';
+const miClavePlana = 'admin123'; 
+const miEmail = 'anyelinahg8@gmail.com'; 
 const miRol = 'admin';
 
 try {
-    // Encriptamos la contraseña con la librería de tu proyecto
+    // Encriptamos la contraseña con bcryptjs
     const salt = bcrypt.genSaltSync(10);
     const hash = bcrypt.hashSync(miClavePlana, salt);
 
-    // Insertamos directamente usando la estructura de campos que vimos en tu users.js
-    // Usaremos la cédula en el campo studentCode para identificar tu usuario
+    // Insertamos en la tabla 'users' con los campos exactos de tu sistema
     const stmt = db.prepare(`
         INSERT OR IGNORE INTO users (name, email, password, role, studentCode) 
         VALUES (?, ?, ?, ?, ?)
     `);
     
     stmt.run(miNombre, miEmail, hash, miRol, miCedula);
-    console.error('¡Anyelina ha sido registrada como Administradora con éxito!');
+    console.log('¡Usuario administrador sembrado con éxito en la tabla users!');
 } catch (error) {
     console.error('Error en el sembrador:', error.message);
 }
