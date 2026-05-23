@@ -19,26 +19,26 @@ const JWT_EXPIRES = process.env.JWT_EXPIRES || '8h';
  */
 router.post('/login', async (req, res, next) => {
     try {
-        const { email, password } = req.body;
+        // CAMBIAMOS EMAIL POR STUDENTCODE PARA QUE RECONOZCA TU CÉDULA
+        const { studentCode, password } = req.body;
 
         // Validación básica de entrada
-        if (!email || !password) {
-            return res.status(400).json({ error: 'Email y contraseña son requeridos.' });
+        if (!studentCode || !password) {
+            return res.status(400).json({ error: 'Cédula y contraseña son requeridos.' });
         }
         if (typeof email !== 'string' || email.length > 255) {
-            return res.status(400).json({ error: 'Email inválido.' });
-        }
-
-        const db   = getDB();
+       // 1. Buscamos el usuario en la base de datos usando studentCode (Cédula)
         const user = db.prepare(`
-            SELECT u.id, u.name, u.email, u.password_hash, u.student_code,
-                   u.is_active, r.name AS role
-            FROM   users u
-            JOIN   roles r ON r.id = u.role_id
-            WHERE  u.email = ?
-        `).get(email.toLowerCase().trim());
-
-        // Mensaje genérico para no revelar si el email existe
+            SELECT 
+                u.id, 
+                u.name, 
+                u.email, 
+                u.password, 
+                u.role, 
+                u.studentCode
+            FROM users u
+            WHERE u.studentCode = ?
+        `).get(studentCode ? studentCode.toString().trim() : '');
         if (!user) {
             return res.status(401).json({ error: 'Credenciales incorrectas.' });
         }
