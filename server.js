@@ -62,7 +62,10 @@ app.get('/profesor*', (_, res) => {
 app.get('/alumno*', (_, res) => {
     res.sendFile(path.join(__dirname, 'frontend/alumno/index.html'));
 });
-
+// Ruta para mostrar la pantalla de registro (AGREGADA AQUÍ EN LA LÍNEA 65)
+app.get('/registro', (req, res) => {
+    res.sendFile(path.join(__dirname, 'frontend/registro.html'));
+});
 app.get('*', (_, res) => {
     res.sendFile(path.join(__dirname, 'frontend/inicio.html'));
 });
