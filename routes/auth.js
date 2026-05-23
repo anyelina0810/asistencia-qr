@@ -35,7 +35,8 @@ router.post('/login', async (req, res, next) => {
             JOIN roles r ON r.id = u.role_id
             WHERE u.student_code = ?
         `).get(studentCode.toString().trim());
-
+  // Agrega esta línea para ver qué encuentra el servidor:
+console.log("Usuario encontrado:", user);
         // Si no existe el usuario
         if (!user) {
             return res.status(401).json({ error: 'Credenciales incorrectas.' });
