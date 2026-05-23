@@ -183,7 +183,7 @@
             <button type="button" class="role-btn" id="btn-profesor" onclick="seleccionarRol('profesor')">Profesor</button>
         </div>
 
-        <form action="validar_login.php" method="POST">
+        <form id="form-login">
             <input type="hidden" id="rol_usuario" name="rol_usuario" value="alumno">
 
             <div class="input-group">
@@ -200,24 +200,61 @@
         </form>
     </div>
 
-    <script>
-        function seleccionarRol(rol) {
-            // Actualiza el input oculto
-            document.getElementById('rol_usuario').value = rol;
-            
-            // Lógica para cambiar la clase activa con animaciones suaves
-            document.getElementById('btn-alumno').classList.remove('active');
-            document.getElementById('btn-profesor').classList.remove('active');
-            document.getElementById('btn-' + rol).classList.add('active');
+   <script>
+// 1. Tu función original mejorada (mantiene tus animaciones y placeholders)
+function seleccionarRol(rol) {
+    // Actualiza el input oculto
+    document.getElementById('rol_usuario').value = rol;
 
-            // Pequeño cambio dinámico en el placeholder dependiendo del rol
-            const inputUsuario = document.getElementById('usuario');
-            if(rol === 'profesor') {
-                inputUsuario.placeholder = 'Usuario o Cédula';
+    // Lógica para cambiar la clase activa
+    document.getElementById('btn-alumno').classList.remove('active');
+    document.getElementById('btn-profesor').classList.remove('active');
+    document.getElementById('btn-' + rol).classList.add('active');
+
+    // Tu cambio dinámico del placeholder
+    const inputUsuario = document.getElementById('usuario');
+    if (rol === 'profesor') {
+        inputUsuario.placeholder = 'Usuario o Cédula';
+    } else {
+        inputUsuario.placeholder = 'Ej: 27123456';
+    }
+}
+
+// 2. NUEVO: Conexión real con el Backend y SQLite al enviar el formulario
+document.getElementById('form-login').addEventListener('submit', async (e) => {
+    e.preventDefault(); // Evita que la página se recargue sola
+
+    // Capturamos lo que el usuario escribió
+    const cedula = document.getElementById('usuario').value;
+    const contrasena = document.getElementById('password').value;
+    const rol = document.getElementById('rol_usuario').value;
+
+    try {
+        // Hacemos la petición a la API de Railway
+        const respuesta = await fetch('/api/sessions', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ cedula, contrasena, rol })
+        });
+
+        const datos = await respuesta.json();
+
+        if (respuesta.ok) {
+            // ¡Si los datos existen en SQLite, redirige al panel correcto!
+            if (rol === 'profesor') {
+                window.location.href = '/profesor';
             } else {
-                inputUsuario.placeholder = 'Ej: 27123456';
+                window.location.href = '/alumno';
             }
+        } else {
+            // Si la base de datos rechaza los datos
+            alert(datos.error || 'Cédula o contraseña incorrecta');
         }
-    </script>
+    } catch (error) {
+        console.error('Error de conexión:', error);
+        alert('Hubo un error al conectar con el servidor de la universidad.');
+    }
+});
+</script>
 </body>
 </html>
