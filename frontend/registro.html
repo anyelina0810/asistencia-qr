@@ -1,0 +1,91 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro - Control de Asistencia UPTAAPC</title>
+    <link rel="stylesheet" href="style.css"> <style>
+        /* ojo falta modificar los tonos */
+        body { font-family: sans-serif; background-color: #f3f4f6; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .register-container { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
+        .logo { max-width: 100px; margin-bottom: 10px; }
+        .input-group { text-align: left; margin-bottom: 15px; }
+        .input-group label { display: block; margin-bottom: 5px; font-weight: bold; color: #374151; }
+        .input-group input, .input-group select { width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 5px; box-sizing: border-box; }
+        .submit-btn { width: 100%; padding: 12px; background-color: #be185d; color: white; border: none; border-radius: 5px; font-size: 16px; cursor: pointer; font-weight: bold; }
+        .submit-btn:hover { background-color: #9d174d; }
+        .link-login { margin-top: 15px; display: block; color: #4f46e5; text-decoration: none; font-size: 14px; }
+    </style>
+</head>
+<body>
+
+<div class="register-container">
+    <img src="logo.jpg" alt="Logo Institucional" class="logo">
+    <h2>Registro de Usuario</h2>
+    <p>Crea una cuenta para el sistema de asistencia</p>
+
+    <form id="form-registro">
+        <div class="input-group">
+            <label for="cedula">Cédula de Identidad</label>
+            <input type="text" id="cedula" required placeholder="Ej: 27123456">
+        </div>
+
+        <div class="input-group">
+            <label for="nombre">Nombre y Apellido</label>
+            <input type="text" id="nombre" required placeholder="Ej: Carlos Pérez">
+        </div>
+
+        <div class="input-group">
+            <label for="rol">Tipo de Usuario (Rol)</label>
+            <select id="rol" required>
+                <option value="alumno">Alumno</option>
+                <option value="profesor">Profesor</option>
+            </select>
+        </div>
+
+        <div class="input-group">
+            <label for="contrasena">Contraseña</label>
+            <input type="password" id="contrasena" required placeholder="********">
+        </div>
+
+        <button type="submit" class="submit-btn">Registrar Usuario</button>
+    </form>
+
+    <a href="/" class="link-login">¿Ya tienes cuenta? Inicia sesión aquí</a>
+</div>
+
+<script>
+document.getElementById('form-registro').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const cedula = document.getElementById('cedula').value;
+    const nombre = document.getElementById('nombre').value;
+    const rol = document.getElementById('rol').value;
+    const contrasena = document.getElementById('contrasena').value;
+
+    try {
+        // Enviamos los datos a la API de creación de usuarios en server.js
+        const respuesta = await fetch('/api/users', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ cedula, nombre, rol, contrasena })
+        });
+
+        const datos = await respuesta.json();
+
+        if (respuesta.ok) {
+            alert('¡Usuario registrado con éxito! Ya puedes iniciar sesión.');
+            window.location.href = '/'; // Redirige al login principal
+        } else {
+            alert(datos.error || 'No se pudo completar el registro');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error al conectar con el servidor.');
+    }
+});
+</script>
+
+</body>
+</html>
