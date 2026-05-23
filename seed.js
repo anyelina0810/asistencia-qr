@@ -1,28 +1,30 @@
 const bcrypt = require('bcryptjs');
-const { getDB } = require('./config/database'); // Ajustado a tu línea 8 de users.js
+const { initDB } = require('./config/database'); // Ajustado a tu línea 14 de server.js
 
-const db = getDB();
+// Obtenemos la base de datos llamando a la función correcta de tu proyecto
+const db = initDB();
 
-// Aquí creamos tu usuario administradora con tu cédula
-const cedulaAdmin = '31698570'; // Tu cédula de la foto
-const nombreAdmin = 'Anyelina Gonzalez';
-const contrasenaPlana = 'admin123'; // Cambia esta clave por la que tú quieras
-const rolAdmin = 'admin';
-const emailAdmin = 'anyelina@uptaapc.edu.ve'; // Tu proyecto pide un email en la línea 16
+// Tus datos de prueba como Administradora Suprema
+const miCedula = '31698570'; 
+const miNombre = 'Anyelina Gonzalez';
+const miClavePlana = 'admin123'; // Esta será tu contraseña para entrar
+const miEmail = 'anyelinahg8@gmail.com';
+const miRol = 'admin';
 
 try {
-    // Encriptamos la contraseña para que el sistema la reconozca de forma segura
+    // Encriptamos la contraseña con la librería de tu proyecto
     const salt = bcrypt.genSaltSync(10);
-    const hash = bcrypt.hashSync(contrasenaPlana, salt);
+    const hash = bcrypt.hashSync(miClavePlana, salt);
 
-    // Insertamos directamente en tu tabla de usuarios
+    // Insertamos directamente usando la estructura de campos que vimos en tu users.js
+    // Usaremos la cédula en el campo studentCode para identificar tu usuario
     const stmt = db.prepare(`
-        INSERT OR IGNORE INTO usuarios (cedula, name, email, password, role) 
+        INSERT OR IGNORE INTO users (name, email, password, role, studentCode) 
         VALUES (?, ?, ?, ?, ?)
     `);
     
-    stmt.run(cedulaAdmin, nombreAdmin, emailAdmin, hash, rolAdmin);
-    console.error('¡Usuario administrador creado con éxito en SQLite!');
+    stmt.run(miNombre, miEmail, hash, miRol, miCedula);
+    console.error('¡Anyelina ha sido registrada como Administradora con éxito!');
 } catch (error) {
-    console.error('Error al sembrar el administrador:', error.message);
+    console.error('Error en el sembrador:', error.message);
 }
