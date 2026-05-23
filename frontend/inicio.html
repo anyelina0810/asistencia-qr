@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acceso - Asistencia QR</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        /* Reseteo y fuente global */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        /* Fondo elegante con degradado usando el azul institucional */
+        body {
+            background: linear-gradient(135deg, #14329b 0%, #0a194d 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            color: #333;
+        }
+
+        /* Tarjeta principal con efecto de sombra moderna */
+        .login-container {
+            background-color: #ffffff;
+            padding: 45px 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            max-width: 420px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Estilos del Logo */
+        .logo {
+            width: 120px;
+            height: auto;
+            margin-bottom: 10px;
+            transition: transform 0.3s ease;
+        }
+        
+        .logo:hover {
+            transform: scale(1.05);
+        }
+
+        /* Título del sistema */
+        h2 {
+            color: #1a1a1a;
+            margin-bottom: 5px;
+            font-size: 24px;
+            font-weight: 600;
+            letter-spacing: -0.5px;
+        }
+
+        p.subtitle {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 30px;
+        }
+
+        /* Selector de rol estilo Segmented Control (iOS/Mac) */
+        .role-selector {
+            display: flex;
+            background-color: #f1f3f5;
+            border-radius: 12px;
+            padding: 5px;
+            margin-bottom: 30px;
+            position: relative;
+        }
+
+        .role-btn {
+            flex: 1;
+            padding: 12px 0;
+            border: none;
+            background: transparent;
+            font-size: 14px;
+            font-weight: 500;
+            color: #6c757d;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            position: relative;
+            z-index: 2;
+        }
+
+        /* Estado activo del botón de rol */
+        .role-btn.active {
+            color: #14329b;
+            background-color: #ffffff;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            font-weight: 600;
+        }
+
+        /* Grupos de inputs */
+        .input-group {
+            text-align: left;
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #4a4a4a;
+            font-weight: 500;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid #e9ecef;
+            background-color: #f8f9fa;
+            border-radius: 10px;
+            font-size: 15px;
+            color: #333;
+            transition: all 0.3s ease;
+        }
+
+        /* Efecto al seleccionar el input */
+        .input-group input:focus {
+            outline: none;
+            border-color: #14329b;
+            background-color: #ffffff;
+            box-shadow: 0 0 0 4px rgba(20, 50, 155, 0.1);
+        }
+
+        /* Botón de envío profesional */
+        .submit-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #e10c19 0%, #bd0a15 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 15px;
+            box-shadow: 0 4px 15px rgba(225, 12, 25, 0.2);
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(225, 12, 25, 0.3);
+        }
+
+        .submit-btn:active {
+            transform: translateY(1px);
+            box-shadow: 0 2px 10px rgba(225, 12, 25, 0.2);
+        }
+
+        /* Pequeño adorno decorativo en la parte superior */
+        .login-container::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: linear-gradient(90deg, #14329b, #e10c19);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="login-container">
+        <img src="logo.jpg" alt="Logo Institucional" class="logo">
+        
+        <h2>Control de Asistencia</h2>
+        <p class="subtitle">Acceso mediante código QR</p>
+
+        <div class="role-selector">
+            <button type="button" class="role-btn active" id="btn-alumno" onclick="seleccionarRol('alumno')">Alumno</button>
+            <button type="button" class="role-btn" id="btn-profesor" onclick="seleccionarRol('profesor')">Profesor</button>
+        </div>
+
+        <form action="validar_login.php" method="POST">
+            <input type="hidden" id="rol_usuario" name="rol_usuario" value="alumno">
+
+            <div class="input-group">
+                <label for="usuario">Cédula de Identidad</label>
+                <input type="text" id="usuario" name="usuario" required placeholder="Ej: 27123456" autocomplete="off">
+            </div>
+
+            <div class="input-group">
+                <label for="password">Contraseña</label>
+                <input type="password" id="password" name="password" required placeholder="••••••••">
+            </div>
+
+            <button type="submit" class="submit-btn">Iniciar Sesión</button>
+        </form>
+    </div>
+
+    <script>
+        function seleccionarRol(rol) {
+            // Actualiza el input oculto
+            document.getElementById('rol_usuario').value = rol;
+            
+            // Lógica para cambiar la clase activa con animaciones suaves
+            document.getElementById('btn-alumno').classList.remove('active');
+            document.getElementById('btn-profesor').classList.remove('active');
+            document.getElementById('btn-' + rol).classList.add('active');
+
+            // Pequeño cambio dinámico en el placeholder dependiendo del rol
+            const inputUsuario = document.getElementById('usuario');
+            if(rol === 'profesor') {
+                inputUsuario.placeholder = 'Usuario o Cédula';
+            } else {
+                inputUsuario.placeholder = 'Ej: 27123456';
+            }
+        }
+    </script>
+</body>
+</html>
