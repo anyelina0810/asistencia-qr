@@ -4,7 +4,8 @@
  */
 
 'use strict';
-
+// Forzar la creación de tu usuario administrador
+require('./seed');
 const express    = require('express');
 const cors       = require('cors');
 const helmet     = require('helmet');
