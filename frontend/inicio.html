@@ -263,12 +263,18 @@ document.getElementById('form-login').addEventListener('submit', async (e) => {
 
         const datos = await respuesta.json();
 
-        if (respuesta.ok) {
-            if (rol === 'profesor') {
-                window.location.href = '/profesor';
-            } else {
-                window.location.href = '/alumno';
-            }
+       if (respuesta.ok) {
+    // AÑADE ESTA LÍNEA PARA GUARDAR EL TOKEN
+    if (datos.token) {
+        localStorage.setItem('token', datos.token); 
+    }
+    
+    if (rol === 'profesor') {
+        window.location.href = '/profesor';
+    } else {
+        window.location.href = '/alumno';
+    }
+}
         } else {
             alert(datos.error || 'Cédula o contraseña incorrecta');
         }
