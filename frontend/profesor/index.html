@@ -309,19 +309,28 @@ let attendanceTimer = null;
 let timerInterval   = null;
 let knownAttendees  = new Set();
 
-// ── Boot ───────────────────────────────────────────────────
+// -- Boot --------------------------------------------------
 (function init() {
-    if (!Auth.isLoggedIn()) { window.location.href = '/'; return; }
+    // Si no está logueado, lo mandamos directo a la raíz del sistema y cortamos la ejecución
+    if (!Auth.isLoggedIn()) {
+        window.location.href = '/'; 
+        return; 
+    }
     const user = Auth.getUser();
-    if (user.role === 'student') { window.location.href = '/student/'; return; }
+ 
+    // Si es un alumno coleado aquí, lo mandamos a su panel
+    if (user.role === 'student') { 
+        window.location.href = '/alumno'; 
+        return; 
+    }
 
-    document.getElementById('userName').textContent      = user.name;
+    // Si todo está bien y está logueado, pintamos su nombre y cargamos materias
+    document.getElementById('userName').textContent = user.name;
     document.getElementById('avatarInitial').textContent = user.name.charAt(0).toUpperCase();
     document.getElementById('sessionDate').value = new Date().toISOString().split('T')[0];
 
     loadSubjects();
 })();
-
 // ── Carga asignaturas ──────────────────────────────────────
 async function loadSubjects() {
     try {
