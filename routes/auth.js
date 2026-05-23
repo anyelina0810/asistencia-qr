@@ -19,52 +19,56 @@ const JWT_EXPIRES = process.env.JWT_EXPIRES || '8h';
  */
 router.post('/login', async (req, res, next) => {
     try {
-        // CAMBIAMOS EMAIL POR STUDENTCODE PARA QUE RECONOZCA TU CÉDULA
         const { studentCode, password } = req.body;
 
         // Validación básica de entrada
         if (!studentCode || !password) {
-            return res.status(400).json({ error: 'Cédula y contraseña son requeridos.' });
+            return res.status(400).json({ error: 'Cédula y contraseña requeridas.' });
         }
-        if (typeof email !== 'string' || email.length > 255) {
-       // 1. Buscamos el usuario en la base de datos usando studentCode (Cédula)
+
+        const db = getDB();
+        
+        // Buscamos al usuario usando el nombre de columna real de tu Base de Datos (student_code)
         const user = db.prepare(`
-            SELECT 
-                u.id, 
-                u.name, 
-                u.email, 
-                u.password, 
-                u.role, 
-                u.studentCode
+            SELECT u.id, u.name, u.email, u.password_hash, u.student_code, u.is_active, r.name AS role
             FROM users u
-            WHERE u.studentCode = ?
-        `).get(studentCode ? studentCode.toString().trim() : '');
+            JOIN roles r ON r.id = u.role_id
+            WHERE u.student_code = ?
+        `).get(studentCode.toString().trim());
+
+        // Si no existe el usuario
         if (!user) {
             return res.status(401).json({ error: 'Credenciales incorrectas.' });
         }
+
+        // Si el usuario está desactivado
         if (!user.is_active) {
             return res.status(403).json({ error: 'Cuenta desactivada. Contacta al administrador.' });
         }
 
+        // Validamos la contraseña usando el password_hash que trajimos de la BD
         const match = await bcrypt.compare(password, user.password_hash);
         if (!match) {
             return res.status(401).json({ error: 'Credenciales incorrectas.' });
         }
 
+        // Creamos el Payload para el JWT usando los datos correctos
         const payload = {
-            id:          user.id,
-            name:        user.name,
-            email:       user.email,
-            role:        user.role,
-            studentCode: user.student_code,
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            role: user.role,
+            studentCode: user.student_code
         };
 
+        // Firmamos el token de autenticación
         const token = jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES });
 
+        // Enviamos la respuesta exitosa al frontend
         res.json({
             token,
             user: payload,
-            expiresIn: JWT_EXPIRES,
+            expiresIn: JWT_EXPIRES
         });
 
     } catch (err) {
