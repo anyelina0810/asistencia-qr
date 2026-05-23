@@ -316,8 +316,9 @@ let knownAttendees  = new Set();
         window.location.href = '/'; 
         return; 
     }
+
     const user = Auth.getUser();
- 
+    
     // Si es un alumno coleado aquí, lo mandamos a su panel
     if (user.role === 'student') { 
         window.location.href = '/alumno'; 
