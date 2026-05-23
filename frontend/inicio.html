@@ -179,8 +179,8 @@
         <p class="subtitle">Acceso mediante código QR</p>
 
         <div class="role-selector">
-            <button type="button" class="role-btn active" id="btn-alumno" onclick="seleccionarRol('alumno')">Alumno</button>
-            <button type="button" class="role-btn" id="btn-profesor" onclick="seleccionarRol('profesor')">Profesor</button>
+          <button type="button" class="role-btn active" id="btn-alumno">Alumno</button>
+<button type="button" class="role-btn" id="btn-profesor">Profesor</button>
         </div>
 
         <form id="form-login">
@@ -200,37 +200,53 @@
         </form>
     </div>
 
-   <script>
-// 1. Tu función original mejorada (mantiene tus animaciones y placeholders)
-function seleccionarRol(rol) {
-    // Actualiza el input oculto
+  <script>
+// 1. Función para cambiar el rol y el diseño de las pestañas
+function cambiarRol(rol) {
+    // Guarda el rol en el input oculto
     document.getElementById('rol_usuario').value = rol;
 
-    // Lógica para cambiar la clase activa
-    document.getElementById('btn-alumno').classList.remove('active');
-    document.getElementById('btn-profesor').classList.remove('active');
-    document.getElementById('btn-' + rol).classList.add('active');
-
-    // Tu cambio dinámico del placeholder
+    // Elementos de la interfaz
+    const btnAlumno = document.getElementById('btn-alumno');
+    const btnProfesor = document.getElementById('btn-profesor');
     const inputUsuario = document.getElementById('usuario');
+
+    // Evaluamos el rol seleccionado para cambiar los estilos uno a uno
     if (rol === 'profesor') {
+        // Activamos profesor y apagamos alumno
+        btnProfesor.classList.add('active');
+        btnAlumno.classList.remove('active');
+        
+        // Cambiamos el texto de guía
         inputUsuario.placeholder = 'Usuario o Cédula';
     } else {
+        // Activamos alumno y apagamos profesor
+        btnAlumno.classList.add('active');
+        btnProfesor.classList.remove('active');
+        
+        // Volvemos al placeholder del alumno
         inputUsuario.placeholder = 'Ej: 27123456';
     }
 }
 
-// 2. NUEVO: Conexión real con el Backend y SQLite al enviar el formulario
-document.getElementById('form-login').addEventListener('submit', async (e) => {
-    e.preventDefault(); // Evita que la página se recargue sola
+// 2. Forzar que los botones escuchen el clic obligatoriamente
+document.getElementById('btn-alumno').addEventListener('click', function() {
+    cambiarRol('alumno');
+});
 
-    // Capturamos lo que el usuario escribió
+document.getElementById('btn-profesor').addEventListener('click', function() {
+    cambiarRol('profesor');
+});
+
+// 3. Procesar el formulario del inicio de sesión
+document.getElementById('form-login').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
     const cedula = document.getElementById('usuario').value;
     const contrasena = document.getElementById('password').value;
     const rol = document.getElementById('rol_usuario').value;
 
     try {
-        // Hacemos la petición a la API de Railway
         const respuesta = await fetch('/api/sessions', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -240,19 +256,17 @@ document.getElementById('form-login').addEventListener('submit', async (e) => {
         const datos = await respuesta.json();
 
         if (respuesta.ok) {
-            // ¡Si los datos existen en SQLite, redirige al panel correcto!
             if (rol === 'profesor') {
                 window.location.href = '/profesor';
             } else {
                 window.location.href = '/alumno';
             }
         } else {
-            // Si la base de datos rechaza los datos
             alert(datos.error || 'Cédula o contraseña incorrecta');
         }
     } catch (error) {
         console.error('Error de conexión:', error);
-        alert('Hubo un error al conectar con el servidor de la universidad.');
+        alert('Hubo un error al conectar con el servidor.');
     }
 });
 </script>
