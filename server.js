@@ -64,7 +64,7 @@ app.get('/alumno*', (_, res) => {
 });
 
 app.get('*', (_, res) => {
-    res.sendFile(path.join(__dirname, 'frontend/index.html'));
+    res.sendFile(path.join(__dirname, 'frontend/inicio.html'));
 });
 
 // -- Manejo de errores global
