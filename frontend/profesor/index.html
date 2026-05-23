@@ -311,26 +311,30 @@ let knownAttendees  = new Set();
 
 // -- Boot --------------------------------------------------
 (function init() {
-    // Si no está logueado, lo mandamos directo a la raíz del sistema y cortamos la ejecución
+    // COMENTAMOS ESTO PARA QUE NO TE SAQUE DE LA PÁGINA
+    /*
     if (!Auth.isLoggedIn()) {
         window.location.href = '/'; 
         return; 
     }
-
+    */
     const user = Auth.getUser();
     
-    // Si es un alumno coleado aquí, lo mandamos a su panel
-    if (user.role === 'student') { 
+    if (user && user.role === 'student') { 
         window.location.href = '/alumno'; 
         return; 
     }
 
-    // Si todo está bien y está logueado, pintamos su nombre y cargamos materias
-    document.getElementById('userName').textContent = user.name;
-    document.getElementById('avatarInitial').textContent = user.name.charAt(0).toUpperCase();
+    // Si hay un usuario, ponemos su nombre, si no, que no haga nada
+    if (user && user.name) {
+        document.getElementById('userName').textContent = user.name;
+        document.getElementById('avatarInitial').textContent = user.name.charAt(0).toUpperCase();
+    }
+    
     document.getElementById('sessionDate').value = new Date().toISOString().split('T')[0];
 
-    loadSubjects();
+    // COMENTAMOS ESTA LÍNEA PARA QUE NO PIDA MATERIAS SIN TOKEN
+    // loadSubjects();
 })();
 // ── Carga asignaturas ──────────────────────────────────────
 async function loadSubjects() {
